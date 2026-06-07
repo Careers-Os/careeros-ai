@@ -4,9 +4,9 @@
 <p><strong>LangGraph agents powering CareerOS intelligence</strong></p>
 
 <p>
-  <a href="https://github.com/career-os/careeros-ai/stargazers"><img src="https://img.shields.io/github/stars/career-os/careeros-ai?style=flat-square&color=1A56DB" alt="Stars"></a>
-  <a href="https://github.com/career-os/careeros-ai/issues"><img src="https://img.shields.io/github/issues/career-os/careeros-ai?style=flat-square&color=1A56DB" alt="Issues"></a>
-  <a href="https://github.com/career-os/careeros-ai/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
+  <a href="https://github.com/Careers-Os/careeros-ai/stargazers"><img src="https://img.shields.io/github/stars/career-os/careeros-ai?style=flat-square&color=1A56DB" alt="Stars"></a>
+  <a href="https://github.com/Careers-Os/careeros-ai/issues"><img src="https://img.shields.io/github/issues/career-os/careeros-ai?style=flat-square&color=1A56DB" alt="Issues"></a>
+  <a href="https://github.com/Careers-Os/careeros-ai/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
 </p>
 
 </div>
@@ -47,7 +47,7 @@
 ### Installation
 
 ```bash
-git clone https://github.com/career-os/careeros-ai.git
+git clone https://github.com/Careers-Os/careeros-ai.git
 cd careeros-ai
 
 # Create virtual environment
