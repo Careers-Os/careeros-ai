@@ -8,7 +8,7 @@ This project is open-source and community-driven. Whether you're a frontend deve
 
 ## 📋 Before You Start
 
-1. **Read the docs** → [careeros-docs](https://github.com/career-os/careeros-docs) — understand the system architecture and roadmap
+1. **Read the docs** → [careeros-docs](https://github.com/Careers-Os/careeros-docs) — understand the system architecture and roadmap
 2. **Find an issue** → Filter by `good-first-issue` if you're new
 3. **Comment on the issue** → Say "I'd like to work on this" before starting — avoids duplicate work
 4. **Wait for assignment** → A maintainer will assign it to you within 24–48 hours
@@ -19,7 +19,7 @@ This project is open-source and community-driven. Whether you're a frontend deve
 
 ### Frontend (careeros-web)
 ```bash
-git clone https://github.com/career-os/careeros-web.git
+git clone https://github.com/Careers-Os/careeros-web.git
 cd careeros-web
 npm install
 cp .env.example .env.local
@@ -28,7 +28,7 @@ npm run dev
 
 ### Backend (careeros-api)
 ```bash
-git clone https://github.com/career-os/careeros-api.git
+git clone https://github.com/Careers-Os/careeros-api.git
 cd careeros-api
 docker-compose up -d        # starts PostgreSQL, Redis, RabbitMQ
 ./mvnw spring-boot:run
@@ -36,7 +36,7 @@ docker-compose up -d        # starts PostgreSQL, Redis, RabbitMQ
 
 ### AI Service (careeros-ai)
 ```bash
-git clone https://github.com/career-os/careeros-ai.git
+git clone https://github.com/Careers-Os/careeros-ai.git
 cd careeros-ai
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
@@ -118,4 +118,4 @@ All contributors are credited in:
 
 ## ❓ Questions?
 
-Not sure where to start? Open a [GitHub Discussion](https://github.com/career-os/careeros-web/discussions) and ask. We're happy to help you find the right issue for your skill level.
+Not sure where to start? Open a [GitHub Discussion](https://github.com/Carees-Os/careeros-web/discussions) and ask. We're happy to help you find the right issue for your skill level.
