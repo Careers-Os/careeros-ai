@@ -4,7 +4,7 @@ import re
 from langchain_groq import ChatGroq
 from langchain.schema import HumanMessage, SystemMessage
 
-# ── LLM Setup ─────────────────────────────────────────────────────────────────
+# ── LLM Setup────────────────────────────────────────────────────────────────
 _llm_instance = None
 
 
@@ -211,7 +211,6 @@ def score_formatting(state: dict) -> dict:
         issues.append("Possible table formatting detected")
 
     lines = resume_text.splitlines()
-    # FIX E741: renamed 'l' -> 'line'
     long_lines = [line for line in lines if len(line) > 150]
     if len(long_lines) > 3:
         score -= 15
@@ -271,7 +270,9 @@ def generate_improvements(state: dict) -> dict:
             f"Weak action verbs found: {state.get('weak_action_verbs', [])[:3]}"
         )
     if state.get("quantification_score", 100) < 70:
-        low_scoring_areas.append("Resume lacks quantified achievements (numbers, percentages, scale)")
+        low_scoring_areas.append(
+            "Resume lacks quantified achievements (numbers, percentages, scale)"
+        )
     if state.get("formatting_score", 100) < 70:
         low_scoring_areas.append("Formatting may cause ATS parsing issues")
 
@@ -281,7 +282,7 @@ def generate_improvements(state: dict) -> dict:
     system_prompt = """You are a professional resume coach. Generate specific, actionable improvements.
 Return ONLY a JSON array:
 [
-  {"priority": "high", "section": "Experience", "message": "Replace 'worked on' with strong verbs like 'engineered' or 'built'"},
+  {"priority": "high", "section": "Experience", "message": "Use strong verbs: engineered, built, optimized"},
   {"priority": "medium", "section": "Skills", "message": "Add missing keywords: Docker, Kubernetes"},
   ...
 ]
