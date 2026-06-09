@@ -308,3 +308,4 @@ def test_score_keywords_no_jd_cap_is_100():
     }
     result = score_keywords(state)
     assert result["keyword_match_score"] == 100
+

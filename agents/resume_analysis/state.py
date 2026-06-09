@@ -52,3 +52,4 @@ class ResumeAnalysisState(TypedDict):
     # ── Final Output (populated by final nodes) ────────────────────────────────
     overall_score: int
     summary: str
+

@@ -48,3 +48,4 @@ app.add_middleware(
 
 # Register all routes
 app.include_router(router)
+
