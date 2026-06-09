@@ -5,22 +5,14 @@ from langchain_groq import ChatGroq
 from langchain.schema import HumanMessage, SystemMessage
 
 # ── LLM Setup ─────────────────────────────────────────────────────────────────
-# FIX #10: Do NOT init LLM at module level — if GROQ_API_KEY is missing,
-# the import itself crashes with a cryptic error instead of a clear config error.
-# LLM is now created via get_llm() and validated at startup in main.py.
 _llm_instance = None
 
 
 def get_llm() -> ChatGroq:
-    """
-    Lazily initializes and returns the shared ChatGroq instance.
-    Called at first use, not at import time.
-    """
     global _llm_instance
     if _llm_instance is None:
         _llm_instance = ChatGroq(
-            groq_api_key=os.environ["GROQ_API_KEY"],   # Raises KeyError clearly
-            # FIX #13: Updated to current recommended Groq model name
+            groq_api_key=os.environ["GROQ_API_KEY"],
             model_name=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
             temperature=0.1,
             max_tokens=2000,
@@ -29,10 +21,6 @@ def get_llm() -> ChatGroq:
 
 
 def _call_llm(system_prompt: str, user_prompt: str) -> str:
-    """
-    Helper to call Groq LLM with system + user message.
-    Returns the raw string response.
-    """
     messages = [
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt),
@@ -42,28 +30,16 @@ def _call_llm(system_prompt: str, user_prompt: str) -> str:
 
 
 def _parse_json_response(response: str) -> dict:
-    """
-    Safely parse JSON from LLM response.
-    LLMs sometimes wrap JSON in markdown code blocks — this handles that.
-    Logs on failure so prompt drift is visible in prod.
-    """
     cleaned = re.sub(r"```json\n?|\n?```", "", response).strip()
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError as e:
-        # FIX #3 (partial) / #14 helper: log instead of silently returning {}
         print(f"[WARN] JSON parse failed: {e}\nRaw response (first 300 chars): {response[:300]}")
         return {}
 
 
 # ── NODE 1: Extract Sections ──────────────────────────────────────────────────
 def extract_sections(state: dict) -> dict:
-    """
-    NODE 1 — Extract Resume Sections
-
-    Identifies and extracts standard resume sections from the raw text.
-    Returns a dict with section names as keys and content as values.
-    """
     system_prompt = """You are a resume parser. Extract sections from the resume text.
 Return ONLY a JSON object with these keys (use null if section is missing):
 {
@@ -86,12 +62,6 @@ Return ONLY the JSON. No explanation."""
 
 # ── NODE 2: Extract Keywords ──────────────────────────────────────────────────
 def extract_keywords(state: dict) -> dict:
-    """
-    NODE 2 — Extract Keywords
-
-    Extracts technical and domain-specific keywords from both the resume
-    and the job description (if provided).
-    """
     system_prompt = """You are a technical recruiter. Extract keywords from the text.
 Return ONLY a JSON object:
 {
@@ -120,27 +90,8 @@ Return ONLY the JSON. No explanation."""
 
 # ── NODE 3: Score Section Completeness ───────────────────────────────────────
 def score_sections(state: dict) -> dict:
-    """
-    NODE 3 — Score Section Completeness (Weight: 20%)
-
-    Checks which key sections are present and scores accordingly.
-
-    Scoring:
-    - contact:        10 pts
-    - summary:        10 pts
-    - skills:         20 pts
-    - experience:     25 pts  (reduced from 30 to fit achievements)
-    - education:      15 pts
-    - projects:       10 pts
-    - certifications:  5 pts
-    - achievements:    5 pts  FIX #4: was extracted but never scored (always 0)
-
-    Total = 100 pts max
-    """
     sections = state.get("sections", {})
 
-    # FIX #4: Added "achievements" with 5 pts weight.
-    # Reduced "experience" from 30 → 25 to keep total = 100.
     section_weights = {
         "contact": 10,
         "summary": 10,
@@ -162,22 +113,10 @@ def score_sections(state: dict) -> dict:
 
 # ── NODE 4: Score Action Verbs ────────────────────────────────────────────────
 def score_action_verbs(state: dict) -> dict:
-    """
-    NODE 4 — Score Action Verbs (Weight: 15%)
-
-    Detects weak action verbs (worked on, helped, assisted) vs strong ones
-    (engineered, architected, optimized, reduced, increased).
-
-    FIX #3: If experience + projects sections are both empty, return score=0
-    (not 50) so the 'missing sections' improvement is triggered instead of
-    a misleading 'weak action verbs' suggestion.
-    """
     experience_text = state.get("sections", {}).get("experience", "") or ""
     projects_text = state.get("sections", {}).get("projects", "") or ""
     combined = f"{experience_text} {projects_text}"
 
-    # FIX #3: Return 0 (not 50) for empty sections.
-    # score_sections already flags missing sections — don't double-report as verb issue.
     if not combined.strip():
         return {**state, "action_verb_score": 0, "weak_action_verbs": []}
 
@@ -206,21 +145,10 @@ Return ONLY the JSON."""
 
 # ── NODE 5: Score Keyword Match ───────────────────────────────────────────────
 def score_keywords(state: dict) -> dict:
-    """
-    NODE 5 — Score Keyword Match (Weight: 35%)
-
-    Compares resume keywords against JD keywords.
-
-    FIX #6: No-JD branch previously capped at 85 (hardcoded silent ceiling).
-    Now caps at 100 like every other scoring node.
-    The 85 cap silently cost up to 5.25 points on the final score with
-    no explanation to the user.
-    """
     resume_keywords = [k.lower() for k in state.get("resume_keywords", [])]
     jd_keywords = [k.lower() for k in state.get("jd_keywords", [])]
 
     if not jd_keywords:
-        # FIX #6: was min(..., 85) — now caps at 100
         score = min(len(resume_keywords) * 5, 100)
         return {**state, "keyword_match_score": score, "keyword_gaps": []}
 
@@ -241,26 +169,14 @@ def score_keywords(state: dict) -> dict:
 
 # ── NODE 6: Score Quantification ─────────────────────────────────────────────
 def score_quantification(state: dict) -> dict:
-    """
-    NODE 6 — Score Quantification (Weight: 15%)
-
-    Detects measurable impact: numbers, percentages, scale.
-
-    FIX #2: Previous regex `\d+\s*(users|...)` missed comma-formatted numbers
-    like "50,000+ users" or "1,000+ stars" because the comma and + between
-    digits and the unit broke the match.
-    Updated to `[\d,]+\+?\s*(users|...)` to handle both formats.
-    """
     experience_text = state.get("sections", {}).get("experience", "") or ""
     projects_text = state.get("sections", {}).get("projects", "") or ""
     combined = f"{experience_text} {projects_text}"
 
     patterns = [
-        r'\d+%',                                            # percentages: 40%
-        r'\d+x',                                            # multipliers: 3x
-        r'\$[\d,]+',                                        # dollar amounts: $50K
-        # FIX #2: was r'\d+\s*(users|requests|ms|s)'
-        # Now handles "50,000+ users", "1,000+ requests"
+        r'\d+%',
+        r'\d+x',
+        r'\$[\d,]+',
         r'[\d,]+\+?\s*(users|requests|ms|seconds|stars)',
         r'(increased|reduced|improved|decreased|grew|scaled)\s+by\s+\d+',
     ]
@@ -286,16 +202,6 @@ def score_quantification(state: dict) -> dict:
 
 # ── NODE 7: Score Formatting ──────────────────────────────────────────────────
 def score_formatting(state: dict) -> dict:
-    """
-    NODE 7 — Score Formatting (Weight: 10%)
-
-    Checks for ATS-unfriendly formatting in raw resume text.
-
-    FIX #5: The special character loop had a `break` that exited after the
-    first offending character. A resume with multiple problem characters
-    (e.g. both ■ and ▪ heavily used) only lost 10 pts instead of 20.
-    Removed the `break` so each offending character is penalized independently.
-    """
     resume_text = state.get("resume_text", "")
     score = 100
     issues = []
@@ -304,21 +210,18 @@ def score_formatting(state: dict) -> dict:
         score -= 20
         issues.append("Possible table formatting detected")
 
-    # Handle both Unix (\n) and Windows (\r\n) line endings
     lines = resume_text.splitlines()
-    long_lines = [l for l in lines if len(l) > 150]
+    # FIX E741: renamed 'l' -> 'line'
+    long_lines = [line for line in lines if len(line) > 150]
     if len(long_lines) > 3:
         score -= 15
         issues.append("Possible multi-column layout detected")
 
-    # FIX #5: Removed `break` — penalize EACH offending special character,
-    # not just the first one found.
     special_chars = ["■", "▪", "◆", "★", "✓", "→"]
     for char in special_chars:
         if resume_text.count(char) > 3:
             score -= 10
             issues.append(f"Special character '{char}' may not parse correctly")
-            # NO break here — continue checking remaining chars
 
     word_count = len(resume_text.split())
     if word_count < 200:
@@ -333,11 +236,6 @@ def score_formatting(state: dict) -> dict:
 
 # ── NODE 8: Score Contact Info ────────────────────────────────────────────────
 def score_contact_info(state: dict) -> dict:
-    """
-    NODE 8 — Score Contact Info (Weight: 5%)
-
-    Checks for presence of essential contact information.
-    """
     contact_text = str(state.get("sections", {}).get("contact", "") or "")
     resume_text = state.get("resume_text", "")
     combined = f"{contact_text} {resume_text[:500]}"
@@ -361,20 +259,17 @@ def score_contact_info(state: dict) -> dict:
 
 # ── NODE 9: Generate Improvements ────────────────────────────────────────────
 def generate_improvements(state: dict) -> dict:
-    """
-    NODE 9 — Generate Improvement Suggestions
-
-    FIX #14: Was duplicating _parse_json_response logic inline with its own
-    re.sub + json.loads block. Now uses the shared helper so any future
-    improvements to the helper (logging, fence handling) apply here too.
-    """
     low_scoring_areas = []
     if state.get("keyword_match_score", 100) < 70:
-        low_scoring_areas.append(f"Keyword match is low. Missing keywords: {state.get('keyword_gaps', [])[:5]}")
+        low_scoring_areas.append(
+            f"Keyword match is low. Missing keywords: {state.get('keyword_gaps', [])[:5]}"
+        )
     if state.get("section_completeness_score", 100) < 70:
         low_scoring_areas.append("Some important resume sections are missing")
     if state.get("action_verb_score", 100) < 70:
-        low_scoring_areas.append(f"Weak action verbs found: {state.get('weak_action_verbs', [])[:3]}")
+        low_scoring_areas.append(
+            f"Weak action verbs found: {state.get('weak_action_verbs', [])[:3]}"
+        )
     if state.get("quantification_score", 100) < 70:
         low_scoring_areas.append("Resume lacks quantified achievements (numbers, percentages, scale)")
     if state.get("formatting_score", 100) < 70:
@@ -396,38 +291,19 @@ Maximum 6 improvements. Be specific. Return ONLY the JSON array."""
     context = "\n".join(low_scoring_areas)
     response = _call_llm(system_prompt, f"Issues found:\n{context}")
 
-    # FIX #14: Use the shared helper instead of duplicating re.sub + json.loads inline
-    parsed = _parse_json_response(response)
-    # _parse_json_response returns dict; for arrays the JSON root is a list
-    # Handle both: if it returned a dict (parse error fallback), default to []
-    if isinstance(parsed, list):
-        improvements = parsed
-    else:
-        # Re-attempt: _parse_json_response only returns dict, so try raw parse for arrays
-        cleaned = re.sub(r"```json\n?|\n?```", "", response).strip()
-        try:
-            improvements = json.loads(cleaned)
-            if not isinstance(improvements, list):
-                improvements = []
-        except json.JSONDecodeError:
+    cleaned = re.sub(r"```json\n?|\n?```", "", response).strip()
+    try:
+        improvements = json.loads(cleaned)
+        if not isinstance(improvements, list):
             improvements = []
+    except json.JSONDecodeError:
+        improvements = []
 
     return {**state, "improvements": improvements}
 
 
 # ── NODE 10: Calculate Final Score ───────────────────────────────────────────
 def calculate_final_score(state: dict) -> dict:
-    """
-    NODE 10 — Calculate Weighted Final Score
-
-    Weights:
-    - Keyword Match:        35%
-    - Section Completeness: 20%
-    - Action Verbs:         15%
-    - Quantification:       15%
-    - Formatting:           10%
-    - Contact Info:          5%
-    """
     weights = {
         "keyword_match_score": 0.35,
         "section_completeness_score": 0.20,
@@ -447,11 +323,6 @@ def calculate_final_score(state: dict) -> dict:
 
 # ── NODE 11: Generate Summary ─────────────────────────────────────────────────
 def generate_summary(state: dict) -> dict:
-    """
-    NODE 11 — Generate Human-Readable Summary
-
-    Final node — generates a 2-3 sentence summary of the overall assessment.
-    """
     system_prompt = """You are a professional resume coach. Write a 2-3 sentence summary of this resume analysis.
 Be honest but encouraging. Mention the overall score and 1-2 key areas to improve.
 Return ONLY the summary text. No JSON."""
