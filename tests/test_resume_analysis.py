@@ -229,8 +229,8 @@ def test_score_sections_achievements_counted(strong_resume_state):
 
 def test_score_formatting_multiple_special_chars():
     """Multiple offending special chars should each deduct points."""
-    two_bad = {"resume_text": "Name\n" + "■ point\n" * 5 + "▪ point\n" * 5, "sections": {}}
-    one_bad = {"resume_text": "Name\n" + "■ point\n" * 5, "sections": {}}
+    two_bad = {"resume_text": "Name\n" + "â–  point\n" * 5 + "â–ª point\n" * 5, "sections": {}}
+    one_bad = {"resume_text": "Name\n" + "â–  point\n" * 5, "sections": {}}
     assert score_formatting(two_bad)["formatting_score"] < \
         score_formatting(one_bad)["formatting_score"]
 
