@@ -8,7 +8,7 @@ from api.routes import router
 load_dotenv()
 
 
-# ── FIX #10: Validate required env vars at startup, not at import time ────────
+# â”€â”€ FIX #10: Validate required env vars at startup, not at import time â”€â”€â”€â”€â”€â”€â”€â”€
 # Previously, ChatGroq was initialized at module level in nodes.py.
 # If GROQ_API_KEY was missing, the error surfaced as a confusing ImportError.
 # Now we validate here with a clear message before the app starts.
@@ -25,7 +25,7 @@ def _validate_env() -> None:
 _validate_env()
 
 
-# ── FIX #9: CORS origins driven by env var, not hardcoded to localhost ────────
+# â”€â”€ FIX #9: CORS origins driven by env var, not hardcoded to localhost â”€â”€â”€â”€â”€â”€â”€â”€
 # Previously: allow_origins=["http://localhost:8080", "http://localhost:3000"]
 # This broke in any deployed environment with no way to override without
 # changing code. Now reads from ALLOWED_ORIGINS env var (comma-separated).
@@ -48,4 +48,3 @@ app.add_middleware(
 
 # Register all routes
 app.include_router(router)
-

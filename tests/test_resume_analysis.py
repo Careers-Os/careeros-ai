@@ -14,7 +14,7 @@ from agents.resume_analysis.nodes import (
 )
 
 
-# ── Fixtures ──────────────────────────────────────────────────────────────────
+# â”€â”€ Fixtures â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @pytest.fixture
 def strong_resume_state():
     """State representing a well-written resume."""
@@ -29,18 +29,18 @@ SKILLS
 Java, Spring Boot, Python, React, PostgreSQL, Docker, Kubernetes, Redis, AWS
 
 EXPERIENCE
-Backend Engineer — TechCorp (2022-2024)
-• Engineered REST APIs serving 50,000+ daily active users
-• Reduced database query time by 40% through indexing optimization
-• Built microservices architecture that scaled to 3x traffic
+Backend Engineer â€” TechCorp (2022-2024)
+â€¢ Engineered REST APIs serving 50,000+ daily active users
+â€¢ Reduced database query time by 40% through indexing optimization
+â€¢ Built microservices architecture that scaled to 3x traffic
 
 EDUCATION
-B.Tech Computer Science — IIT Bombay (2022)
+B.Tech Computer Science â€” IIT Bombay (2022)
 
 PROJECTS
-CareerOS — Open Source AI Career Platform
-• Architected full-stack system with 1,000+ GitHub stars
-• Integrated LangGraph agents reducing resume analysis time by 60%
+CareerOS â€” Open Source AI Career Platform
+â€¢ Architected full-stack system with 1,000+ GitHub stars
+â€¢ Integrated LangGraph agents reducing resume analysis time by 60%
 
 CERTIFICATIONS
 AWS Solutions Architect Associate
@@ -51,8 +51,8 @@ AWS Solutions Architect Associate
             "summary": "Software Engineer with 2 years experience",
             "skills": "Java, Spring Boot, Python, React, PostgreSQL, Docker",
             "experience": "Engineered REST APIs serving 50,000+ daily active users. Reduced by 40%",
-            "education": "B.Tech Computer Science — IIT Bombay",
-            "projects": "CareerOS — 1,000+ GitHub stars",
+            "education": "B.Tech Computer Science â€” IIT Bombay",
+            "projects": "CareerOS â€” 1,000+ GitHub stars",
             "certifications": "AWS Solutions Architect",
             "achievements": None,
         },
@@ -136,7 +136,7 @@ def empty_sections_state():
     }
 
 
-# ── Tests ─────────────────────────────────────────────────────────────────────
+# â”€â”€ Tests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_score_sections_strong(strong_resume_state):
     """Strong resume with all sections should score high."""
     result = score_sections(strong_resume_state)
@@ -157,7 +157,7 @@ def test_score_keywords_with_jd(strong_resume_state):
 
 
 def test_score_keywords_no_jd(weak_resume_state):
-    """No JD provided — should still return a score."""
+    """No JD provided â€” should still return a score."""
     result = score_keywords(weak_resume_state)
     assert "keyword_match_score" in result
     assert result["keyword_match_score"] >= 0
@@ -192,7 +192,7 @@ def test_calculate_final_score():
     Final score should be weighted average of all category scores.
 
     FIX #1: Previous test asserted == 81, which is WRONG.
-    Python's round() uses banker's rounding: round(80.5) → 80, not 81.
+    Python's round() uses banker's rounding: round(80.5) â†’ 80, not 81.
 
     Breakdown:
       80 * 0.35 = 28.0
@@ -201,7 +201,7 @@ def test_calculate_final_score():
       60 * 0.15 =  9.0
      100 * 0.10 = 10.0
      100 * 0.05 =  5.0
-               = 80.5  →  int(round(80.5)) = 80  (banker's rounding)
+               = 80.5  â†’  int(round(80.5)) = 80  (banker's rounding)
     """
     state = {
         "keyword_match_score": 80,
@@ -222,7 +222,7 @@ def test_formatting_score_clean_text(strong_resume_state):
     assert result["formatting_score"] >= 70
 
 
-# ── New tests covering previously untested behavior ───────────────────────────
+# â”€â”€ New tests covering previously untested behavior â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def test_score_action_verbs_empty_sections_returns_zero(empty_sections_state):
     """
@@ -265,13 +265,13 @@ def test_score_formatting_multiple_special_chars():
     FIX #5: Multiple offending special characters should each deduct points.
     Previously a `break` caused only the first offender to be penalized.
     """
-    # Both ■ and ▪ appear more than 3 times each
+    # Both â–  and â–ª appear more than 3 times each
     resume_with_two_bad_chars = {
-        "resume_text": "Name\n" + "■ point\n" * 5 + "▪ point\n" * 5,
+        "resume_text": "Name\n" + "â–  point\n" * 5 + "â–ª point\n" * 5,
         "sections": {},
     }
     resume_with_one_bad_char = {
-        "resume_text": "Name\n" + "■ point\n" * 5,
+        "resume_text": "Name\n" + "â–  point\n" * 5,
         "sections": {},
     }
     score_two = score_formatting(resume_with_two_bad_chars)["formatting_score"]
@@ -308,4 +308,3 @@ def test_score_keywords_no_jd_cap_is_100():
     }
     result = score_keywords(state)
     assert result["keyword_match_score"] == 100
-

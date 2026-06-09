@@ -59,4 +59,3 @@ class AnalyzeResponse(BaseModel):
     improvements: list[Improvement] = Field(default_factory=list, description="Prioritized improvement suggestions")
     summary: str = Field(..., description="2-3 sentence overall assessment")
     status: str = Field(default="completed")
-
