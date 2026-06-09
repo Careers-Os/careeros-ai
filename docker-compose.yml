@@ -1,0 +1,15 @@
+# FIX #12: Removed 'version: 3.8' key.
+# The top-level 'version' field is deprecated in Docker Compose v2+.
+# Docker Compose v2 auto-detects the format and the key generates a
+# deprecation warning on every 'docker compose up'.
+
+services:
+  careeros-ai:
+    build: .
+    ports:
+      - "8090:8090"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    restart: unless-stopped
