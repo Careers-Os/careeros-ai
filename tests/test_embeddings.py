@@ -90,12 +90,12 @@ class TestSemanticSimilarity:
         assert score > 0.5
 
     def test_similarity_between_unrelated_resume_and_jd(self):
-            embed_resume("sim-resume-unrelated", SAMPLE_RESUME)
-            embed_jd("sim-jd-unrelated", SAMPLE_JD_UNRELATED)
+        embed_resume("sim-resume-unrelated", SAMPLE_RESUME)
+        embed_jd("sim-jd-unrelated", SAMPLE_JD_UNRELATED)
 
-            score = semantic_similarity("sim-resume-unrelated", "sim-jd-unrelated")
+        score = semantic_similarity("sim-resume-unrelated", "sim-jd-unrelated")
 
-            assert 0.0 <= score <= 1.0
+        assert 0.0 <= score <= 1.0
 
     def test_similarity_raises_if_resume_not_embedded(self):
         embed_jd("sim-jd-only", SAMPLE_JD_MATCHING)
