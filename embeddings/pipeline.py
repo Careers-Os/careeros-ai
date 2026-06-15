@@ -12,7 +12,7 @@ collection, distinguished by a 'doc_type' field in the payload
 linked back to its parent document via 'doc_id'.
 """
 
-import hashlib
+# import hashlib
 import logging
 import uuid
 
