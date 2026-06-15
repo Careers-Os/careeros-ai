@@ -1,9 +1,4 @@
-"""
-AI-003 — Unit tests for the embedding pipeline.
 
-These tests require a running Qdrant instance (see docker-compose).
-Run with: pytest tests/test_embeddings.py -v
-"""
 
 import os
 
