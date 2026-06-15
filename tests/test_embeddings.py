@@ -123,3 +123,4 @@ class TestSemanticSimilarity:
         embed_resume("sim-resume-only", SAMPLE_RESUME)
         with pytest.raises(ValueError):
             semantic_similarity("sim-resume-only", "nonexistent-jd-id")
+            
